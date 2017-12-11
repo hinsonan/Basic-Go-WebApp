@@ -33,7 +33,12 @@ func loadPage(title string) (*Page, error) {
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
-	p, _ := loadPage(title)
+	p, err := loadPage(title)
+	//if there is not a page then we want to send them to the edit so they can add content
+	if err != nil {
+		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
+	}
 	renderTemplate(w, "view", p)
 }
 
@@ -44,6 +49,22 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		p = &Page{Title: title}
 	}
 	renderTemplate(w, "edit", p)
+}
+
+/*
+The page title (provided in the URL) and the form's only field, Body, are stored in a new Page.
+ The save() method is then called to write the data to a file, and the client is redirected to the /view/ page.
+
+The value returned by FormValue is of type string.
+We must convert that value to []byte before it will fit into the Page struct.
+We use []byte(body) to perform the conversion.
+*/
+func saveHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/save/"):]
+	body := r.FormValue("body")
+	p := &Page{Title: title, Body: []byte(body)}
+	p.save()
+	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
 //writes to the specific html template
@@ -61,6 +82,6 @@ func main() {
 	*/
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
-	//http.HandleFunc("/save/", saveHandler)
+	http.HandleFunc("/save/", saveHandler)
 	http.ListenAndServe(":8080", nil)
 }
