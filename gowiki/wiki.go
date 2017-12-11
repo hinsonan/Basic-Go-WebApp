@@ -12,17 +12,22 @@ type Page struct {
 	Body  []byte
 }
 
+//allows us to save a page with a title and body
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
+//loads the name of the file
 func loadPage(title string) (*Page, error) {
+	//adds the .txt extension to the file
 	filename := title + ".txt"
 	body, err := ioutil.ReadFile(filename)
+	//returns the  error if it exist
 	if err != nil {
 		return nil, err
 	}
+	//returns the new page
 	return &Page{Title: title, Body: body}, nil
 }
 
@@ -41,6 +46,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "edit", p)
 }
 
+//writes to the specific html template
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	t, _ := template.ParseFiles(tmpl + ".html")
 	t.Execute(w, p)
